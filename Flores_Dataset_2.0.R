@@ -73,10 +73,8 @@ longitudinal_variables = c('HHIDPN',
                            'R9FINEA', 'R10FINEA', 'R11FINEA', 'R12FINEA', 'R13FINEA', 'R14FINEA', 'R15FINEA', 'R16FINEA',                         # fine motor limitations
                            'R9SLEEPFAL', 'R10SLEEPFAL', 'R11SLEEPFAL', 'R12SLEEPFAL', 'R13SLEEPFAL', 'R14SLEEPFAL', 'R15SLEEPFAL', 'R16SLEEPFAL', # trouble falling asleep
                            'R9BMI', 'R10BMI', 'R11BMI', 'R12BMI', 'R13BMI', 'R14BMI', 'R15BMI', 'R16BMI',                                         # body mass index
-                           'R9EARAID', 'R10EARAID', 'R11EARAID', 'R12EARAID', 'R13EARAID', 'R14EARAID', 'R15EARAID', 'R16EARAID',                 # hearing aid use
-                           'R9EYEGLC', 'R10EYEGLC', 'R11EYEGLC', 'R12EYEGLC', 'R13EYEGLC', 'R14EYEGLC', 'R15EYEGLC', 'R16EYEGLC',                 # treated for glaucoma (note this is asked )
-                           'R9EYECAT', 'R10EYECAT', 'R11EYECAT', 'R12EYECAT', 'R13EYECAT', 'R14EYECAT', 'R15EYECAT', 'R16EYECAT')                 # cataract surgery ***
 
+)
 
 # Re-code gender variable, add age variable, save smaller longitudinal file for outcome cleaning
 randhrs1992_2022 = randhrs1992_2022 |>
@@ -277,6 +275,34 @@ for (v in sleepfal_vars) {
                                         ifelse(val == 3, 0, NA)))  # Rarely/never → no
 }
 
+# Health Outcome Cleaning: Memory (MEMORY) ----
+
+# Clean Alzheimer's and Dementia variables
+randhrs1992_2022 = clean_hrs_condition(randhrs1992_2022, "ALZHE")
+randhrs1992_2022 = clean_hrs_condition(randhrs1992_2022, "DEMEN")
+
+# Wave 9: memory disease
+randhrs1992_2022$R9MEMORY = randhrs1992_2022$R9MEMRYE #doing this to get this as 1 variable
+
+# Waves 10-16: Alzheimer's OR Dementia
+for (wave in 10:16) {
+  
+  alz = paste0("R", wave, "ALZHE")
+  dem = paste0("R", wave, "DEMEN")
+  mem = paste0("R", wave, "MEMORY")
+  
+  randhrs1992_2022[[mem]] = ifelse(
+    is.na(randhrs1992_2022[[alz]]) &
+      is.na(randhrs1992_2022[[dem]]),
+    NA,
+    as.integer(
+      randhrs1992_2022[[alz]] == 1 |
+        randhrs1992_2022[[dem]] == 1
+    )
+  )
+}
+
+
 # Health Outcome Cleaning: Respondent is obese (BMI > 30) ----
 # NOTE: We are referencing the BMI column to construct this column. Use i+8 to 
 OBESE = paste0("R", 9:16, "OBESE")
@@ -287,26 +313,6 @@ for (i in seq_along(OBESE)) {
     NA,
     as.integer(randhrs_merged[[paste0("R", wave, "BMI")]] >= 30)
   )
-}
-
-# Health Outcome Cleaning: Respondent uses hearing aid (EARAID) ----
-earaid_vars = paste0("R", 9:16, "EARAID")
-for (v in earaid_vars) {
-  randhrs_merged[[v]] = ifelse(randhrs_merged[[v]] %in% c(0, 1), randhrs_merged[[v]], NA)
-}
-
-# Health Outcome Cleaning: Respondent has had glaucoma surgery (EYEGLC) ---- [DO WE KEEP?]
-# Note: .A (not age eligible) is collapsed to NA along with other missing codes
-eyeglc_vars = paste0("R", 9:16, "EYEGLC")
-for (v in eyeglc_vars) {
-  randhrs_merged[[v]] = ifelse(randhrs_merged[[v]] %in% c(0, 1), randhrs_merged[[v]], NA)
-}
-
-
-# Health Outcome Cleaning: Respondent has had cataract surgery (EYECAT) ---- [DO WE KEEP?]
-eyecat_vars = paste0("R", 9:16, "EYECAT")
-for (v in eyecat_vars) {
-  randhrs_merged[[v]] = ifelse(randhrs_merged[[v]] %in% c(0, 1), randhrs_merged[[v]], NA)
 }
 
 
@@ -332,10 +338,7 @@ check_cleaned_conditions(randhrs1992_2022, conditions_on_1992)
 
 # Conditions cleaned on randhrs_merged
 conditions_on_merged = c(
-  paste0("R", 9:16, "OBESE"),
-  paste0("R", 9:16, "EARAID"),
-  paste0("R", 9:16, "EYEGLC"),
-  paste0("R", 9:16, "EYECAT")
+  paste0("R", 9:16, "OBESE")
 )
 check_cleaned_conditions(randhrs_merged, conditions_on_merged)
 
@@ -1233,12 +1236,10 @@ final_variables = c('HHIDPN',
                     'R9FINEA', 'R10FINEA', 'R11FINEA', 'R12FINEA', 'R13FINEA', 'R14FINEA', 'R15FINEA', 'R16FINEA',          # [KEEP?]
                     'R9SLEEPFAL', 'R10SLEEPFAL', 'R11SLEEPFAL', 'R12SLEEPFAL', 'R13SLEEPFAL', 'R14SLEEPFAL', 'R15SLEEPFAL', 'R16SLEEPFAL',
                     'R9BMI', 'R10BMI', 'R11BMI', 'R12BMI', 'R13BMI', 'R14BMI', 'R15BMI', 'R16BMI',
-                    'R9OBESE', 'R10OBESE', 'R11OBESE', 'R12OBESE', 'R13OBESE', 'R14OBESE', 'R15OBESE', 'R16OBESE',        
-                    'R9EARAID', 'R10EARAID', 'R11EARAID', 'R12EARAID', 'R13EARAID', 'R14EARAID', 'R15EARAID', 'R16EARAID',
-                    'R9EYEGLC', 'R10EYEGLC', 'R11EYEGLC', 'R12EYEGLC', 'R13EYEGLC', 'R14EYEGLC', 'R15EYEGLC', 'R16EYEGLC',  # [KEEP?]
-                    'R9EYECAT', 'R10EYECAT', 'R11EYECAT', 'R12EYECAT', 'R13EYECAT', 'R14EYECAT', 'R15EYECAT', 'R16EYECAT'   # [KEEP?]
-
+                    'R9OBESE', 'R10OBESE', 'R11OBESE', 'R12OBESE', 'R13OBESE', 'R14OBESE', 'R15OBESE', 'R16OBESE',
+                    'R9MEMORY', 'R10MEMORY', 'R11MEMORY', 'R12MEMORY', 'R13MEMORY', 'R14MEMORY', 'R15MEMORY', 'R16MEMORY'
                     
+                 
 )
 
 randhrs_final = randhrs_merged |> 

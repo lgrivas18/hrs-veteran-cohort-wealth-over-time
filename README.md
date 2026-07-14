@@ -19,7 +19,7 @@ the output yourself.
    defined set of variables: IDs, interview status/weights, demographics, self-reported
    health outcomes, chronic conditions, wealth/income, and additional health/impairment
    variables (waves 9–16).
-2. **Merges in** wave-specific HRS "FAT" files (2002–2022) to pull in childhood health/SES
+2. **Merges in** wave-specific HRS "FAT" files (2008–2022) to pull in childhood health/SES
    variables and military service variables (year began/ended service, disability, etc.),
    joined on `HHIDPN`.
 3. **Recodes chronic condition variables** (hypertension, diabetes, cancer, lung disease,
